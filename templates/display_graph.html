@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Display</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Directed Graph Display</h1>
+    <div id="graph"></div>
+
+    <script>
+        var numEdges = {{ num_edges|tojson|safe }};
+        var edges = {{ edges|tojson|safe }};
+
+        var nodes = [];
+        var edgesData = [];
+
+        for (var i = 0; i < numEdges; i++) {
+            nodes.push(i.toString());
+            var source = i.toString();
+            var target = ((i + 1) % numEdges).toString();
+            edgesData.push({ 'source': source, 'target': target });
+        }
+
+        var graphData = [{
+            type: 'scatter',
+            mode: 'markers',
+            x: edges.map(function (edge) { return edge[0]; }),
+            y: edges.map(function (edge) { return edge[1]; }),
+            marker: {
+                size: 10
+            },
+        }];
+
+        var layout = {
+            title: 'Directed Graph Display',
+            showlegend: false,
+            hovermode: 'closest',
+            xaxis: { title: 'X Coordinate' },
+            yaxis: { title: 'Y Coordinate' }
+        };
+
+        Plotly.newPlot('graph', graphData, layout);
+    </script>
+</body>
+</html>

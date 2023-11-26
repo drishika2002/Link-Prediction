@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Graph Display</title>
+</head>
+<body>
+    <h1>ENTER GRAPH DETAILS</h1>
+    <form action="/display_graph" method="post">
+        <label for="num_edges">Number of Edges:</label>
+        <input type="number" name="num_edges" required>
+        <br>
+
+        {% for i in range(num_edges) %}
+            <label for="x{{ i }}">Edge {{ i+1 }} - X coordinate:</label>
+            <input type="number" name="x{{ i }}" step="any" required>
+            <label for="y{{ i }}">Y coordinate:</label>
+            <input type="number" name="y{{ i }}" step="any" required>
+            <br>
+        {% endfor %}
+
+        <input type="submit" value="Display Graph">
+    </form>
+</body>
+</html>
