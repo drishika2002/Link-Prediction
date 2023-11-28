@@ -8,6 +8,10 @@ import pickle
 import pandas as pd
 from pandas import HDFStore
 
+# Switch Matplotlib to a non-interactive backend
+import matplotlib
+matplotlib.use('Agg')
+
 app = Flask(__name__)
 app.static_folder = 'static'
 
