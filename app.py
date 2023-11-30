@@ -7,6 +7,7 @@ import base64
 import pickle
 import pandas as pd
 from pandas import HDFStore
+import itertools
 
 # Switch Matplotlib to a non-interactive backend
 import matplotlib
@@ -96,7 +97,7 @@ def extract_features(G, node1, node2):
     shortest_path_length = compute_shortest_path_length(G, node1, node2)
     adar_index_value = adar_index(G, node1, node2)
     follows_back_value = follows_back(G, node1, node2)
-    features = np.array([jaccard_followers, jaccard_followees, shortest_path_length, adar_index_value, follows_back_value])
+    features = np.array([jaccard_followers, jaccard_followees, shortest_path_length, adar_index_value, follows_back_value, 0, 0, 0, 0, 0, 0])
     return features
 
 @app.route('/display_graph', methods=['POST'])
@@ -126,27 +127,28 @@ def display_graph():
         for node2 in G.nodes():
             if node1 != node2 and not G.has_edge(node1, node2):
                 features = extract_features(G, node1, node2)
+                edge_score = xgboost_model.predict_proba(features.reshape(1, -1))[:, 1].item()
+                threshold = 0.2
+                prediction = edge_score > threshold
+                predictions[(node1, node2)] = prediction
 
-                # Accessing values from the DataFrame with error handling
-                source_rows = df_final_train[df_final_train['source_node'] == node1]
-                destination_rows = df_final_train[df_final_train['destination_node'] == node2]
-
-                if not source_rows.empty and not destination_rows.empty:
-                    features = extract_features(G, node1, node2)
-                    edge_score = xgboost_model.predict_proba(features.reshape(1, -1))[:, 1].item()
-                    threshold = 0.5
-                    prediction = edge_score > threshold
-
-                    predictions[(node1, node2)] = prediction
+    # Add predicted edges to the graph
+    for (node1, node2), prediction in predictions.items():
+        if prediction:
+            G.add_edge(node1, node2)
 
     # Plot the directed graph using Matplotlib
+    plt.figure(figsize=(10, 6))
     pos = nx.spring_layout(G)
     nx.draw(G, pos, with_labels=True, node_size=700, node_color='skyblue', font_size=8, font_color='black', arrowsize=10)
 
-    # Display the predictions for non-existing edges
+    # Create a legend for predictions
+    print("Predicted Edges:")
+    print("----------------------------")
+    print("|   Edge    |  Prediction  |")
+    print("----------------------------")
     for (node1, node2), prediction in predictions.items():
-        plt.annotate(f'Edge: {node1} -> {node2}, Prediction: {"Will" if prediction else "Will Not"} be formed',
-                     xy=pos[node1], xytext=pos[node2], arrowprops=dict(arrowstyle="->", color='red'))
+        print(f"| {node1} -> {node2} | {'Will' if prediction else 'Will Not'} be formed |")
 
     # Save the plot to a BytesIO object
     img_buf = io.BytesIO()
@@ -156,7 +158,10 @@ def display_graph():
     # Encode the image to base64 for displaying in HTML
     img_data = base64.b64encode(img_buf.read()).decode('utf-8')
 
-    return render_template('display_graph.html', graph_image=img_data)
+    # Prepare predictions for displaying on the webpage
+    prediction_data = [(node1, node2, prediction) for (node1, node2), prediction in predictions.items()]
+
+    return render_template('display_graph.html', graph_image=img_data, predictions=prediction_data)
 
 if __name__ == '__main__':
     app.run(debug=True)

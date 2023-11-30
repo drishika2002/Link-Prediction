@@ -9,5 +9,22 @@
 <body>
     <h1>Directed Graph Display</h1>
     <img src="data:image/png;base64,{{ graph_image }}" alt="Directed Graph">
+
+    <div style="margin-top: 20px;">
+        <h3>Predicted Edges</h3>
+        <table border="1">
+            <tr>
+                <th>Edge</th>
+                <th>Prediction</th>
+            </tr>
+            {% for node1, node2, prediction in predictions %}
+                <tr>
+                    <td>{{ node1 }} -> {{ node2 }}</td>
+                    <td>{{ 'Will' if prediction else 'Will Not' }} be formed</td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
 </body>
 </html>
+
